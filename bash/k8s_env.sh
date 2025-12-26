@@ -50,18 +50,24 @@ k8s-search() {
 # ------------------------------------------------------------
 generate_kubectl_namespace_aliases() {
   local outfile="$HOME/.kubectl_aliases"
-  : > "$outfile"
+  : > "$outfile"  # truncate/create
 
-  kubectl get namespaces -o jsonpath='{.items[*].metadata.name}' 2>/dev/null \
-    | tr ' ' '\n' \
+  # Reliable, one-per-line namespace extraction (no jsonpath whitespace issues)
+  kubectl get namespaces --no-headers -o custom-columns="NAME:.metadata.name" 2>/dev/null \
     | grep -v '^default$' \
     | while read -r ns; do
-        echo "alias k-$ns='kubectl -n $ns'" >> "$outfile"
+        [[ -n "$ns" ]] && echo "alias k-${ns}='kubectl -n ${ns}'" >> "$outfile"
       done
 
-  # IMPORTANT: source immediately
-  source "$outfile"
+  # Always ensure the most common one exists
+  grep -q "^alias ksys=" "$outfile" || echo "alias ksys='kubectl -n kube-system'" >> "$outfile"
+
+  # Source immediately so the aliases are available in the current shell
+  [[ -r "$outfile" ]] && source "$outfile"
 }
+
+# Manual reload command (run this after exporting KUBECONFIG or when namespaces change)
+alias k-reload-ns='generate_kubectl_namespace_aliases && echo "Namespace aliases reloaded ($(wc -l < "$HOME/.kubectl_aliases") aliases loaded)"'
 
 # ------------------------------------------------------------
 # Always run for interactive shells
