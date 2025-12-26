@@ -1,6 +1,3 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -8,70 +5,51 @@
 *.so
 *.dylib
 
-# Test binary, built with `go test -c`
+# Test binaries and artifacts (Go-specific)
 *.test
-
-# Code coverage profiles and other test artifacts
 *.out
 coverage.*
 *.coverprofile
 profile.cov
 
-# Dependency directories (remove the comment below to include it)
+# Dependency directories (Go)
 # vendor/
 
-# Go workspace file
+# Go workspace files
 go.work
 go.work.sum
 
-# env file
+# Environment files
 .env
+.env.*
 
-# Editor/IDE
-# .idea/
-# .vscode/
-
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Thumbnails
-._*
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Editor temp files
+# Editor/IDE directories and files
+.idea/
+.vscode/
 *~
 *.swp
 *.swo
 *.swn
 
-# Personal secrets (in case you ever add local overrides)
-*.secret
-*.local
-
-# OS junk
+# macOS system files
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows system files
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Editor
-.vscode/
-.idea/
-
-# Shell history / secrets
+# Shell / logging artifacts
 *.history
 *.log
 
-# Local overrides (never commit)
+# Personal secrets and local overrides (never commit)
+*.secret
 *.local
 *.private
-.env
-.env.*
 
-# Generated files
+# Generated files (specific to your k8s setup)
 kubectl_aliases
