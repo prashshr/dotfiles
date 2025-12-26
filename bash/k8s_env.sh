@@ -51,8 +51,6 @@ k8s-search() {
 
 # ------------------------------------------------------------
 # Generate namespace aliases dynamically
-# Creates:
-#   k-<namespace> → kubectl -n <namespace>
 # ------------------------------------------------------------
 generate_kubectl_namespace_aliases() {
   local outfile="$HOME/.kubectl_aliases"
@@ -64,9 +62,17 @@ generate_kubectl_namespace_aliases() {
     | while read -r ns; do
         echo "alias k-$ns='kubectl -n $ns'" >> "$outfile"
       done
-
-  source "$outfile"
 }
+
+# ------------------------------------------------------------
+# Always (re)generate and source namespace aliases
+# ------------------------------------------------------------
+if [[ $- == *i* ]] && command -v kubectl >/dev/null 2>&1; then
+  if kubectl config current-context >/dev/null 2>&1; then
+    generate_kubectl_namespace_aliases
+    [ -r "$HOME/.kubectl_aliases" ] && source "$HOME/.kubectl_aliases"
+  fi
+fi
 
 # Auto-generate namespace aliases in interactive shells
 if [[ $- == *i* ]] && [[ -n "${KUBECONFIG:-}" ]] && command -v kubectl >/dev/null 2>&1; then
