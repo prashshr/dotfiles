@@ -17,10 +17,12 @@ export KUBE_EDITOR=${KUBE_EDITOR:-vi}
 # ------------------------------------------------------------
 # kubectl shortcut + completion
 # ------------------------------------------------------------
-if command -v kubectl >/dev/null 2>&1; then
+if command -v kubectl >/dev/null 2>&1 \
+   && [[ -n "${KUBECONFIG:-}" ]] \
+   && [[ -r "$KUBECONFIG" ]]; then
   alias k='kubectl'
-  source <(kubectl completion bash) 2>/dev/null || true
-  complete -F __start_kubectl k 2>/dev/null || true
+  source <(kubectl completion bash)
+  complete -F __start_kubectl k
 fi
 
 # ------------------------------------------------------------
@@ -50,32 +52,30 @@ k8s-search() {
 # ------------------------------------------------------------
 generate_kubectl_namespace_aliases() {
   local outfile="$HOME/.kubectl_aliases"
-  : > "$outfile"  # truncate/create
+  : > "$outfile"
 
-  # Reliable, one-per-line namespace extraction (no jsonpath whitespace issues)
   kubectl get namespaces --no-headers -o custom-columns="NAME:.metadata.name" 2>/dev/null \
     | grep -v '^default$' \
     | while read -r ns; do
         [[ -n "$ns" ]] && echo "alias k-${ns}='kubectl -n ${ns}'" >> "$outfile"
       done
 
-  # Always ensure the most common one exists
   grep -q "^alias ksys=" "$outfile" || echo "alias ksys='kubectl -n kube-system'" >> "$outfile"
 
-  # Source immediately so the aliases are available in the current shell
   [[ -r "$outfile" ]] && source "$outfile"
 }
 
-# Manual reload command (run this after exporting KUBECONFIG or when namespaces change)
+# Manual reload command
 alias k-reload-ns='generate_kubectl_namespace_aliases && echo "Namespace aliases reloaded ($(wc -l < "$HOME/.kubectl_aliases") aliases loaded)"'
 
 # ------------------------------------------------------------
-# Always run for interactive shells
+# Always run for interactive shells (SAFE)
 # ------------------------------------------------------------
-if [[ $- == *i* ]] && command -v kubectl >/dev/null 2>&1; then
-  if kubectl config view >/dev/null 2>&1; then
-    generate_kubectl_namespace_aliases
-  fi
+if [[ $- == *i* ]] \
+   && command -v kubectl >/dev/null 2>&1 \
+   && [[ -n "${KUBECONFIG:-}" ]] \
+   && [[ -r "$KUBECONFIG" ]]; then
+  generate_kubectl_namespace_aliases
 fi
 
 # ------------------------------------------------------------
