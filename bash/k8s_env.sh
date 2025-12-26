@@ -17,10 +17,10 @@ export KUBE_EDITOR=${KUBE_EDITOR:-vi}
 # ------------------------------------------------------------
 # kubectl shortcut + completion
 # ------------------------------------------------------------
-if command -v kubectl >/dev/null 2>&1 && kubectl config view >/dev/null 2>&1; then
+if command -v kubectl >/dev/null 2>&1; then
   alias k='kubectl'
-  source <(kubectl completion bash)
-  complete -F __start_kubectl k
+  source <(kubectl completion bash) 2>/dev/null || true
+  complete -F __start_kubectl k 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------
