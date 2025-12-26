@@ -67,7 +67,9 @@ generate_kubectl_namespace_aliases() {
 # Always run for interactive shells
 # ------------------------------------------------------------
 if [[ $- == *i* ]] && command -v kubectl >/dev/null 2>&1; then
-  generate_kubectl_namespace_aliases
+  if kubectl config view >/dev/null 2>&1; then
+    generate_kubectl_namespace_aliases
+  fi
 fi
 
 # ------------------------------------------------------------
