@@ -28,15 +28,6 @@ if command -v kubectl >/dev/null 2>&1; then
 fi
 
 # ------------------------------------------------------------
-# Context & namespace helpers (low noise, high value)
-# ------------------------------------------------------------
-alias kctx='kubectl config current-context'
-alias kns='kubectl config set-context --current --namespace'
-
-# Usage:
-#   kns my-namespace
-
-# ------------------------------------------------------------
 # Node labels (cleaned output)
 # ------------------------------------------------------------
 alias kubectl-node-labels='kubectl get nodes -o wide --show-labels \
