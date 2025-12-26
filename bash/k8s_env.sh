@@ -1,17 +1,13 @@
 # ============================================================
 # Minimal kubectl / Kubernetes Bash Add-on
-# Author: <your-github-username>
+# Author: prashshr
 # Usage:
-#   curl -fsSL <RAW_GITHUB_URL> >> ~/.bashrc
+#   mkdir -p $HOME/.dotfiles/bash
+#   curl -fsSL https://raw.githubusercontent.com/prashshr/dotfiles/main/bash/k8s_env.sh -o "$HOME/.dotfiles/bash/k8s_env.sh"
+#   chmod 644 $HOME/.dotfiles/bash/k8s_env.sh
+#   grep -qxF '[ -r "$HOME/.dotfiles/bash/k8s_env.sh" ] && source "$HOME/.dotfiles/bash/k8s_env.sh"' "$HOME/.bashrc" || printf '\n%s\n\n' '[ -r "$HOME/.dotfiles/bash/k8s_env.sh" ]
+#   source "$HOME/.dotfiles/bash/k8s_env.sh"' >> "$HOME/.bashrc"
 # ============================================================
-
-# ------------------------------------------------------------
-# Guard: prevent duplicate loading
-# ------------------------------------------------------------
-if [[ -n "${__KUBECTL_BASH_ADDON_LOADED:-}" ]]; then
-  return 0
-fi
-export __KUBECTL_BASH_ADDON_LOADED=1
 
 # ------------------------------------------------------------
 # Core kubectl environment
@@ -50,7 +46,7 @@ k8s-search() {
 }
 
 # ------------------------------------------------------------
-# Generate namespace aliases dynamically
+# Generate + source namespace aliases
 # ------------------------------------------------------------
 generate_kubectl_namespace_aliases() {
   local outfile="$HOME/.kubectl_aliases"
@@ -62,25 +58,20 @@ generate_kubectl_namespace_aliases() {
     | while read -r ns; do
         echo "alias k-$ns='kubectl -n $ns'" >> "$outfile"
       done
+
+  # IMPORTANT: source immediately
+  source "$outfile"
 }
 
 # ------------------------------------------------------------
-# Always (re)generate and source namespace aliases
+# Always run for interactive shells
 # ------------------------------------------------------------
 if [[ $- == *i* ]] && command -v kubectl >/dev/null 2>&1; then
-  if kubectl config current-context >/dev/null 2>&1; then
-    generate_kubectl_namespace_aliases
-    [ -r "$HOME/.kubectl_aliases" ] && source "$HOME/.kubectl_aliases"
-  fi
-fi
-
-# Auto-generate namespace aliases in interactive shells
-if [[ $- == *i* ]] && [[ -n "${KUBECONFIG:-}" ]] && command -v kubectl >/dev/null 2>&1; then
   generate_kubectl_namespace_aliases
 fi
 
 # ------------------------------------------------------------
-# Diagnostics helpers (no aliases, explicit intent)
+# Diagnostics helpers
 # ------------------------------------------------------------
 k-events() {
   kubectl get events -A --sort-by=.metadata.creationTimestamp
@@ -91,5 +82,5 @@ k-api-health() {
 }
 
 # ============================================================
-# End of kubectl bash add-on
+# End of kubectl environment
 # ============================================================
