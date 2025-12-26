@@ -10,33 +10,41 @@
 # ============================================================
 
 # ------------------------------------------------------------
-# Core kubectl environment
+# Prevent duplicate loading (safe to source multiple times)
+# ------------------------------------------------------------
+if [[ -n "${__KUBECTL_BASH_ADDON_LOADED:-}" ]]; then
+  return 0
+fi
+export __KUBECTL_BASH_ADDON_LOADED=1
+
+# ------------------------------------------------------------
+# Core environment (always safe)
 # ------------------------------------------------------------
 export KUBE_EDITOR=${KUBE_EDITOR:-vi}
 
 # ------------------------------------------------------------
-# kubectl shortcut + completion
+# kubectl shortcut + completion (enabled whenever kubectl binary exists)
 # ------------------------------------------------------------
-if command -v kubectl >/dev/null 2>&1 \
-   && [[ -n "${KUBECONFIG:-}" ]] \
-   && [[ -r "$KUBECONFIG" ]]; then
+if command -v kubectl >/dev/null 2>&1; then
   alias k='kubectl'
-  source <(kubectl completion bash)
-  complete -F __start_kubectl k
+
+  # Completion: try to load, but suppress any errors (works client-side even without config)
+  source <(kubectl completion bash) 2>/dev/null || true
+  complete -F __start_kubectl k 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------
-# Node labels (cleaned output)
+# Node labels (cleaned output) - always defined
 # ------------------------------------------------------------
 alias kubectl-node-labels='kubectl get nodes -o wide --show-labels \
   | sed "s/[a-zA-Z0-9\.\-]*kubernetes\.io[^,]*,//g"'
 
 # ------------------------------------------------------------
-# Search across core resources + CRDs
+# Search across core resources + CRDs - defined early, works when config is set
 # ------------------------------------------------------------
 k8s-search() {
   local term="$1"
-  [[ -z "$term" ]] && echo "Usage: k8s-search <pattern>" && return 1
+  [[ -z "$term" ]] && { echo "Usage: k8s-search <pattern>"; return 1; }
 
   for r in pods deployments services configmaps secrets statefulsets daemonsets jobs cronjobs ingress; do
     kubectl get "$r" -A 2>/dev/null | grep -i --color=auto "$term" && echo "---"
@@ -48,11 +56,11 @@ k8s-search() {
 }
 
 # ------------------------------------------------------------
-# Generate + source namespace aliases
+# Generate namespace aliases (manual only)
 # ------------------------------------------------------------
 generate_kubectl_namespace_aliases() {
   local outfile="$HOME/.kubectl_aliases"
-  : > "$outfile"
+  : > "$outfile"  # truncate/create
 
   kubectl get namespaces --no-headers -o custom-columns="NAME:.metadata.name" 2>/dev/null \
     | grep -v '^default$' \
@@ -60,26 +68,18 @@ generate_kubectl_namespace_aliases() {
         [[ -n "$ns" ]] && echo "alias k-${ns}='kubectl -n ${ns}'" >> "$outfile"
       done
 
+  # Always ensure the most common one
   grep -q "^alias ksys=" "$outfile" || echo "alias ksys='kubectl -n kube-system'" >> "$outfile"
 
+  # Source immediately for current shell
   [[ -r "$outfile" ]] && source "$outfile"
 }
 
-# Manual reload command
-alias k-reload-ns='generate_kubectl_namespace_aliases && echo "Namespace aliases reloaded ($(wc -l < "$HOME/.kubectl_aliases") aliases loaded)"'
+# Manual reload command - run ONLY after setting KUBECONFIG
+alias k-reload-ns='generate_kubectl_namespace_aliases && echo "Namespace aliases reloaded ($(wc -l < "$HOME/.kubectl_aliases" 2>/dev/null || echo 0) aliases loaded)"'
 
 # ------------------------------------------------------------
-# Always run for interactive shells (SAFE)
-# ------------------------------------------------------------
-if [[ $- == *i* ]] \
-   && command -v kubectl >/dev/null 2>&1 \
-   && [[ -n "${KUBECONFIG:-}" ]] \
-   && [[ -r "$KUBECONFIG" ]]; then
-  generate_kubectl_namespace_aliases
-fi
-
-# ------------------------------------------------------------
-# Diagnostics helpers
+# Diagnostics helpers - defined early, work when config is set
 # ------------------------------------------------------------
 k-events() {
   kubectl get events -A --sort-by=.metadata.creationTimestamp
