@@ -30,3 +30,48 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor temp files
+*~
+*.swp
+*.swo
+*.swn
+
+# Personal secrets (in case you ever add local overrides)
+*.secret
+*.local
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Shell history / secrets
+*.history
+*.log
+
+# Local overrides (never commit)
+*.local
+*.private
+.env
+.env.*
+
+# Generated files
+kubectl_aliases
